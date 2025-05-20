@@ -135,4 +135,3 @@ print("\n✅ 추천 메뉴 목록:")
 for menu in filtered_menu:
     print(menu)
 
-print(f"\n📁 메뉴 데이터가 '{menu_file_path}'에 저장되었습니다!")
