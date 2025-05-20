@@ -3,7 +3,7 @@ import time
 import requests
 
 # API 주소 설정
-API_URL = "http://openapi.foodsafetykorea.go.kr/api/7904b29570d44de38aa6/COOKRCP01/json/1/100"
+API_URL = "http://openapi.foodsafetykorea.go.kr/api/7904b29570d44de38aa6/COOKRCP01/json/1/500"
 
 def get_menu_data():
     """ API에서 메뉴 데이터를 가져옴 """
@@ -130,8 +130,5 @@ menu_file_path = os.path.join(data_dir, "menu_list.txt")
 with open(menu_file_path, "w", encoding="utf-8") as f:
     f.write("\n".join(filtered_menu))
 
-# 결과 출력
-print("\n✅ 추천 메뉴 목록:")
-for menu in filtered_menu:
-    print(menu)
+
 
