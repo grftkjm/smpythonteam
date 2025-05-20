@@ -36,4 +36,4 @@ if recipe_choice in ["예", "y"]:
     subprocess.run(["python", recipe_path])
 
 # ✅ 실행이 끝난 후 종료 방지 메시지 추가
-input("\n✅ 모든 과정이 종료되었습니다. 종료하시려면 Enter 키를 누르세요...")
+input("\n✅ 모든 과정이 종료되었습니다. 종료하시려면 Enter 키를 누르세요.")
