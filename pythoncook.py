@@ -15,7 +15,7 @@ if not os.path.exists(data_dir):
 choice = None
 while choice not in ["1", "2", "3"]:
     print("\n원하는 레시피 유형을 선택하세요:")
-    print("1. 유형에 따른 레시피\n2. 보유 재료에 따른 레시피\n3. 음식 종류에 따른 레시피")
+    print("1. 다이어트를 위한 레시피\n2. 보유 재료에 따른 레시피\n3. 음식 종류에 따른 레시피")
     choice = input("번호 입력: ").strip()
 
     if choice not in ["1", "2", "3"]:
