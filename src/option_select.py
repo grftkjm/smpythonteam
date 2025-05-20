@@ -14,46 +14,45 @@ def get_menu_data():
     else:
         raise Exception("❌ API에서 데이터를 불러오는 데 실패했습니다.")
 
-def filter_menu(menu_data, tdee, choice):
+def calculate_tdee(weight, height, age, gender, activity_level):
+    """ 사용자의 정보를 바탕으로 TDEE 계산 """
+    if gender.lower() == "남성":
+        bmr = 88.36 + (13.4 * weight) + (4.8 * height) - (5.7 * age)
+    else:  # 여성
+        bmr = 447.6 + (9.2 * weight) + (3.1 * height) - (4.3 * age)
+
+    activity_factor = {
+        "1": 1.2,  # 운동 거의 안함
+        "2": 1.375,  # 가벼운 운동 (주 1~3회)
+        "3": 1.55,  # 중간 정도 운동 (주 3~5회)
+        "4": 1.725,  # 고강도 운동 (주 6~7회)
+        "5": 1.9   # 아주 높은 운동량 (운동선수 수준)
+    }
+
+    return bmr * activity_factor.get(activity_level, 1.2)  # 기본값 1.2(거의 운동 안 함)
+
+def filter_menu(menu_data, choice, tdee=None, calorie_deficit=0):
     """ 사용자의 선택에 맞게 메뉴 필터링 """
     filtered_menu = []
-    diet_calories = tdee / 3
-    rice_adjusted_calories = diet_calories - 300
 
-    # 밥과 함께 먹을 다이어트식 선택 시 권장 칼로리 초과 확인
-    if choice == "밥과 함께 먹을 다이어트식" and rice_adjusted_calories < 0:
-        print("\n⚠️ 밥 한 공기의 칼로리(약 300 kcal)가 다이어트 권장 열량을 초과합니다. 일반 다이어트식을 추천합니다.")
-        choice = "다이어트식"
+    if choice in ["다이어트식", "밥과 함께 먹을 다이어트식"]:
+        target_calories = (tdee - calorie_deficit) / 3
+        if choice == "밥과 함께 먹을 다이어트식":
+            target_calories -= 300
+    else:
+        target_calories = None  # 일반식의 경우 제한 없이 전체 메뉴 출력
 
     for i, menu in enumerate(menu_data):
         try:
             menu_name = f"{i+1}. {menu['RCP_NM']} ({menu['INFO_ENG']} kcal)"
             menu_calories = float(menu["INFO_ENG"])
 
-            if choice == "상관없음":
-                filtered_menu.append(menu_name)
-            elif choice == "밥과 함께 먹을 다이어트식" and menu_calories <= rice_adjusted_calories:
-                filtered_menu.append(menu_name)
-            elif choice == "다이어트식" and menu_calories <= diet_calories:
-                filtered_menu.append(menu_name)
-            elif choice == "일반식" and menu_calories >= diet_calories:
+            if target_calories is None or menu_calories <= target_calories:
                 filtered_menu.append(menu_name)
         except ValueError:
             pass  # 칼로리 값이 없거나 잘못된 경우 무시
 
-    # 밥과 함께 먹을 다이어트식을 선택했지만 해당하는 음식이 없을 경우 자동 변경
-    if choice == "밥과 함께 먹을 다이어트식" and not filtered_menu:
-        print("\n⚠️ 밥과 함께 먹을 다이어트식 기준에 맞는 음식이 없습니다. 일반 다이어트식을 추천합니다.")
-        choice = "다이어트식"
-        filtered_menu, _, _ = filter_menu(menu_data, tdee, choice)
-
-    # 다이어트식을 선택했지만 해당하는 음식이 없을 경우 자동 변경
-    if choice == "다이어트식" and not filtered_menu:
-        print("\n⚠️ 다이어트 권장 열량 이하의 음식이 없습니다. 일반식과 함께 적절한 운동을 권장합니다.")
-        choice = "일반식"
-        filtered_menu, _, _ = filter_menu(menu_data, tdee, choice)
-
-    return filtered_menu, choice
+    return filtered_menu
 
 # 프로젝트 폴더 구조 설정
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -62,42 +61,71 @@ data_dir = os.path.join(base_dir, "..", "data")
 # 'data' 폴더가 없으면 생성
 os.makedirs(data_dir, exist_ok=True)
 
-# 사용자 입력 받기
-print("메뉴 유형을 선택하세요:")
-print("1. 일반식\n2. 밥과 함께 먹을 다이어트식\n3. 다이어트식\n4. 상관없음")
+# 사용자 입력 받기 (올바른 숫자 입력할 때까지 반복)
+choice = None
+while choice not in ["1", "2", "3"]:
+    print("\n메뉴 유형을 선택하세요:")
+    print("1. 일반식\n2. 밥과 함께 먹을 다이어트식\n3. 다이어트식")
+    choice = input("번호 입력: ").strip()
+
+    if choice not in ["1", "2", "3"]:
+        print("❌ 올바른 숫자를 입력하세요. (1~3 중 선택)")
+
+# 선택한 옵션 설정
 choice_map = {
     "1": "일반식",
     "2": "밥과 함께 먹을 다이어트식",
-    "3": "다이어트식",
-    "4": "상관없음"
+    "3": "다이어트식"
 }
-choice = choice_map.get(input("번호 입력: "), "상관없음")
+choice = choice_map[choice]
 
-tdee_file_path = os.path.join(data_dir, "tdee_info.txt")
+# 다이어트식을 선택한 경우 TDEE 및 감량 목표 입력 요청
+tdee = None
+calorie_deficit = 0
 
-# TDEE 값 불러오기
-try:
-    with open(tdee_file_path, "r", encoding="utf-8") as f:
-        tdee = float(f.read().strip())
-except FileNotFoundError:
-    print("❌ TDEE 값을 찾을 수 없습니다. 먼저 TDEE.py를 실행하세요.")
-    exit()
+if choice in ["다이어트식", "밥과 함께 먹을 다이어트식"]:
+    print("\n🔹 TDEE를 계산하기 위해 다음 정보를 입력하세요.")
+    weight = float(input("체중 (kg): "))
+    height = float(input("키 (cm): "))
+    age = int(input("나이: "))
+    gender = input("성별 (남성/여성): ").strip().lower()
+    
+    print("\n🔹 운동 수준을 선택하세요:")
+    print("1. 거의 운동 안 함\n2. 가벼운 운동 (주 1~3회)\n3. 중간 운동 (주 3~5회)\n4. 고강도 운동 (주 6~7회)\n5. 매우 높은 수준 운동 (운동선수)")
+    activity_level = input("번호 입력: ").strip()
 
-# API에서 메뉴 데이터를 가져옴
+    tdee = calculate_tdee(weight, height, age, gender, activity_level)
+    print(f"\n✅ 당신의 TDEE는 {tdee:.2f} kcal 입니다.")
+
+    # 일주일 감량 목표 입력
+    weight_loss_goal = float(input("\n🔹 일주일 목표 감량량 (kg): "))
+    
+    if weight_loss_goal > 1.5:
+        print("\n⚠️ 건강한 다이어트를 위해 일주일 1.5kg을 초과하는 감량은 권장되지 않습니다.")
+        print("✅ 1.5kg 기준으로 추천해드릴게요.")
+        weight_loss_goal = 1.5  # 최대 1.5kg으로 제한
+    
+    calorie_deficit = (weight_loss_goal * 7700) / 7  # 하루 감량 목표 칼로리
+    print(f"\n✅ 일주일 목표 감량량: {weight_loss_goal}kg")
+    print(f"🔻 하루 줄여야 할 칼로리: {calorie_deficit:.2f} kcal")
+
+# API에서 메뉴 데이터 가져오기
 menu_data = get_menu_data()
-filtered_menu, final_choice = filter_menu(menu_data, tdee, choice)
+filtered_menu = filter_menu(menu_data, choice, tdee, calorie_deficit)
 
-# 특정 선택지일 경우 메시지 출력 후 5초 대기
-if final_choice == "밥과 함께 먹을 다이어트식":
-    print(f"\n사용자의 신체에 맞는 다이어트 권장 열량에서 밥 한 공기의 칼로리(300 kcal)를 제외한 칼로리는 {tdee/3 - 300:.2f} kcal 입니다.")
-    print("해당 열량 이하의 음식 불러오는 중...")
-    time.sleep(5)
-elif final_choice == "다이어트식":
-    print(f"\n사용자의 신체에 맞는 다이어트 권장 칼로리는 {tdee/3:.2f} kcal 입니다.")
-    print("해당 열량 이하의 음식 불러오는 중...")
-    time.sleep(5)
+# ✅ 필터링된 메뉴가 없으면 일반식으로 변경
+if not filtered_menu and choice in ["다이어트식", "밥과 함께 먹을 다이어트식"]:
+    print("\n⚠️ 사용자의 신체에 비해 과한 체중감량 목표입니다. 일반식과 적절한 운동을 통한 다이어트를 권장합니다.")
+    choice = "일반식"
+    time.sleep(5)  # 5초 대기 후 일반식 출력
+    filtered_menu = filter_menu(menu_data, choice)  # 일반식으로 변경하여 필터링
 
-# 메뉴 목록을 파일에 저장
+# ✅ 선택한 옵션 저장
+option_file_path = os.path.join(data_dir, "selected_option.txt")
+with open(option_file_path, "w", encoding="utf-8") as f:
+    f.write(choice)
+
+# ✅ 필터링된 메뉴 목록 저장
 menu_file_path = os.path.join(data_dir, "menu_list.txt")
 with open(menu_file_path, "w", encoding="utf-8") as f:
     f.write("\n".join(filtered_menu))
@@ -106,3 +134,5 @@ with open(menu_file_path, "w", encoding="utf-8") as f:
 print("\n✅ 추천 메뉴 목록:")
 for menu in filtered_menu:
     print(menu)
+
+print(f"\n📁 메뉴 데이터가 '{menu_file_path}'에 저장되었습니다!")
