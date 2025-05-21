@@ -57,7 +57,16 @@ if not menu_info:
     print(f"\n❌ '{menu_name}'의 정보를 API에서 찾을 수 없습니다.")
     exit()
 
-# ✅ 선택한 메뉴의 식재료 저장
+# ✅ 선택한 메뉴의 식재료 및 영양정보 저장
 ingredients = menu_info["RCP_PARTS_DTLS"]
+nutrition_info = f"""
+🔹 나트륨: {menu_info.get("INFO_NA", "정보 없음")} mg
+🔹 탄수화물: {menu_info.get("INFO_CAR", "정보 없음")} g
+🔹 단백질: {menu_info.get("INFO_PRO", "정보 없음")} g
+🔹 지방: {menu_info.get("INFO_FAT", "정보 없음")} g
+🔹 열량: {menu_info.get("INFO_ENG", "정보 없음")} kcal
+"""
+
 with open(ingredient_file_path, "w", encoding="utf-8") as f:
-    f.write(f"{menu_name}\n{ingredients}")
+    f.write(f"{menu_name}\n{ingredients}\n{nutrition_info}")
+
