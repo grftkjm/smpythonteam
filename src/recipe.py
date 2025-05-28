@@ -1,75 +1,107 @@
-import os
+import tkinter as tk
 import requests
-from PIL import Image
-import io
+import json
+import subprocess  # 이미지 실행을 위해 사용
+import os  # 이미지 저장을 위해 사용
+from tkinter import messagebox
 
-# API 주소 설정
-API_URL = "http://openapi.foodsafetykorea.go.kr/api/7904b29570d44de38aa6/COOKRCP01/json/1/1000"
+# 파일 경로
+INGREDIENT_FILE = "data/ingredient.txt"
+IMAGE_FILE = "data/recipe_image.jpg"
 
-def get_recipe(menu_name):
-    """ API에서 해당 메뉴의 레시피와 이미지 URL 가져옴 """
+# API URL
+API_URL = "http://openapi.foodsafetykorea.go.kr/api/7904b29570d44de38aa6/COOKRCP01/json/1/500"
+
+# 메뉴명 가져오기 (ingredient.txt에서 메뉴명만 가져옴)
+def get_menu_name():
+    try:
+        with open(INGREDIENT_FILE, "r", encoding="utf-8") as file:
+            return file.readline().strip().replace("메뉴명: ", "")  # "메뉴명: " 제거하고 가져오기
+    except FileNotFoundError:
+        return None
+
+# 메뉴 레시피 가져오기
+def fetch_recipe(menu_name):
     response = requests.get(API_URL)
-    if response.status_code == 200:
-        data = response.json()["COOKRCP01"]["row"]
-        for menu in data:
-            if menu["RCP_NM"] == menu_name:
-                recipe_steps = {key: value for key, value in menu.items() if key.startswith("MANUAL")}
-                image_url = menu.get("ATT_FILE_NO_MK", "")  # ✅ 이미지 URL 가져오기
-                return recipe_steps, image_url
+    data = response.json()
+
+    for item in data["COOKRCP01"]["row"]:
+        if item["RCP_NM"] == menu_name:
+            recipe_steps = []
+            for i in range(1, 21):  # MANUAL01 ~ MANUAL20 확인
+                step_key = f"MANUAL{str(i).zfill(2)}"  # 01, 02 형식 유지
+                step = item.get(step_key, "").strip()
+                if not step:  # 빈 값이면 종료
+                    break
+                recipe_steps.append(step)
+
+            image_url = item.get("ATT_FILE_NO_MAIN", None)
+
+            return recipe_steps, image_url
+
     return None, None
 
-def download_image(image_url, save_path):
-    """ 이미지 다운로드 후 저장 """
-    response = requests.get(image_url)
-    if response.status_code == 200:
-        image = Image.open(io.BytesIO(response.content))
-        image.save(save_path)
-        return save_path
-    return None
+# GUI 설정
+root = tk.Tk()
+root.title("레시피 진행")
+root.geometry("500x300")
 
-# 프로젝트 폴더 설정
-base_dir = os.path.dirname(os.path.abspath(__file__))
-data_dir = os.path.join(base_dir, "..", "data")
-ingredient_file_path = os.path.join(data_dir, "ingredient.txt")
-image_file_path = os.path.join(data_dir, "recipe_image.jpg")
+menu_name = get_menu_name()
+if not menu_name:
+    messagebox.showerror("오류", "ingredient.txt에서 메뉴명을 찾을 수 없습니다.")
+    root.quit()  # 프로그램 정상 종료
 
-# ✅ `ingredient.txt`에서 메뉴명 읽기
-if not os.path.exists(ingredient_file_path):
-    print("❌ 식재료 정보 파일이 존재하지 않습니다.")
-    exit()
-
-with open(ingredient_file_path, "r", encoding="utf-8") as f:
-    menu_name = f.readline().strip()  # 첫 번째 줄은 메뉴명
-
-# ✅ API에서 레시피 및 이미지 가져오기
-recipe_steps, image_url = get_recipe(menu_name)
-
+recipe_steps, image_url = fetch_recipe(menu_name)
 if not recipe_steps:
-    print(f"\n❌ '{menu_name}'의 레시피를 API에서 찾을 수 없습니다.")
-    exit()
+    messagebox.showerror("오류", "해당 메뉴의 레시피를 찾을 수 없습니다.")
+    root.quit()  # 프로그램 정상 종료
 
-# ✅ 레시피 출력 (사용자가 Enter 키를 누르면 다음 단계로 이동)
-print(f"\n🍽️ 선택한 메뉴: {menu_name}\n")
-print("📜 레시피 단계별 안내:")
-for i, step in sorted(recipe_steps.items()):
-    if not step.strip():  # ✅ 값이 비어 있으면 즉시 종료
-        break
-    input(f"\n🔹 {step}\n👉 다음 단계로 진행하려면 Enter 키를 누르세요...")
+# 레시피 진행 변수
+current_step = 0
 
-# ✅ 모든 단계 완료 후 이미지 출력 여부 확인
-print("\n🎉 모든 과정이 완료되었습니다! 맛있게 드세요! 🍽️")
-
-if image_url:
-    show_image = input("\n📷 요리 이미지를 보여드릴까요? (예/아니오): ").strip().lower()
-    if show_image in ["예", "y"]:
-        downloaded_image = download_image(image_url, image_file_path)
-        if downloaded_image:
-            print(f"\n📷 요리 이미지가 저장되었습니다: {downloaded_image}")
-            image = Image.open(downloaded_image)
-            image.show()  # ✅ 이미지 출력
-        else:
-            print("\n⚠️ 이미지 다운로드에 실패했습니다.")
+# 레시피 진행 함수
+def next_step():
+    global current_step
+    if current_step < len(recipe_steps):
+        label_recipe.config(text=recipe_steps[current_step])
+        current_step += 1
     else:
-        print("\n❌ 이미지를 표시하지 않습니다.")
-else:
-    print("\n⚠️ 해당 메뉴의 요리 이미지를 API에서 찾을 수 없습니다.")
+        ask_image()  # 레시피 종료 후 이미지 출력 여부 질문
+
+# 이미지 출력 여부 질문
+def ask_image():
+    result = messagebox.askyesno("레시피 완료", "완성! 이미지를 출력할까요?")
+    if result:
+        download_and_show_image()
+    else:
+        finish_process()
+
+# 이미지 다운로드 및 실행
+def download_and_show_image():
+    if image_url:
+        response = requests.get(image_url)
+        with open(IMAGE_FILE, "wb") as file:
+            file.write(response.content)
+        
+        messagebox.showinfo("이미지 저장 완료", "레시피 이미지가 저장되었습니다.")
+        subprocess.run(["start", IMAGE_FILE], shell=True)  # 이미지 실행
+    finish_process()
+
+# 모든 과정 완료 메시지
+def finish_process():
+    messagebox.showinfo("완료", "모든 과정이 종료되었습니다.")
+    root.destroy()
+
+# 레시피 표시
+label_title = tk.Label(root, text=f"{menu_name} 레시피", font=("Arial", 16))
+label_title.pack(pady=10)
+
+label_recipe = tk.Label(root, text="", font=("Arial", 12), wraplength=480)
+label_recipe.pack(pady=10)
+
+btn_next = tk.Button(root, text="다음", command=next_step, width=10)
+btn_next.pack(pady=10)
+
+next_step()  # 첫 번째 레시피 단계 시작
+
+root.mainloop()
