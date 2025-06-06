@@ -1,10 +1,13 @@
 import tkinter as tk
-import subprocess  # 다른 Python 파일 실행을 위해 사용
-import os  # 파일 초기화를 위해 사용
+import subprocess   
+import os  
 
 # 파일 초기화 함수
 def clear_data_folder():
     data_folder = "data"
+    os.makedirs(data_folder, exist_ok=True)
+
+    # 파일 삭제 (txt, jpg)
     for file in os.listdir(data_folder):
         if file.endswith(".txt") or file.endswith(".jpg"):
             os.remove(os.path.join(data_folder, file))
@@ -27,13 +30,13 @@ label = tk.Label(root, text="레시피를 선택하세요!", font=("Arial", 14))
 label.pack(pady=10)
 
 # 버튼 추가
-btn_diet = tk.Button(root, text="🍽 다이어트 레시피", width=25, command=lambda: run_script("diet_option.py"))
+btn_diet = tk.Button(root, text="다이어트를 위한 레시피", width=25, command=lambda: run_script("diet_option.py"))
 btn_diet.pack(pady=5)
 
-btn_ingredient = tk.Button(root, text="🥦 보유 재료 기반 레시피", width=25, command=lambda: run_script("ingredient_select.py"))
+btn_ingredient = tk.Button(root, text="보유 재료 기반 레시피", width=25, command=lambda: run_script("ingredient_select.py"))
 btn_ingredient.pack(pady=5)
 
-btn_type = tk.Button(root, text="🍲 음식 유형 선택", width=25, command=lambda: run_script("type_select.py"))
+btn_type = tk.Button(root, text="음식 유형별 레시피", width=25, command=lambda: run_script("type_select.py"))
 btn_type.pack(pady=5)
 
 # GUI 실행

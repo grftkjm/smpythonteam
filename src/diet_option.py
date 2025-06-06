@@ -1,7 +1,7 @@
 import tkinter as tk
 import requests
 import json
-import subprocess  # 추가: 다른 Python 파일 실행을 위해 사용
+import subprocess 
 from tkinter import ttk, messagebox
 
 # API URL

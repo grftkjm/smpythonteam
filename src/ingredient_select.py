@@ -1,7 +1,7 @@
 import tkinter as tk
 import requests
 import json
-import subprocess  # menu_select.py 실행을 위해 사용
+import subprocess  
 from tkinter import messagebox
 
 # API URL

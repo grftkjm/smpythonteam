@@ -1,7 +1,7 @@
 import tkinter as tk
 import requests
 import json
-import subprocess  # 추가: ingredient_display.py 실행을 위해 사용
+import subprocess 
 from tkinter import ttk, messagebox
 
 # API URL
@@ -11,15 +11,15 @@ API_URL = "http://openapi.foodsafetykorea.go.kr/api/7904b29570d44de38aa6/COOKRCP
 MENU_FILE = "data/menu_list.txt"
 INGREDIENT_FILE = "data/ingredient.txt"
 
-# 메뉴 리스트 가져오기 (열량 포함하여 표시)
+# 메뉴 리스트 가져옴옴
 def load_menu_list():
     try:
         with open(MENU_FILE, "r", encoding="utf-8") as file:
-            return file.read().splitlines()  # 그대로 불러옴 (메뉴명 + 열량)
+            return file.read().splitlines() 
     except FileNotFoundError:
         return []
 
-# 메뉴 정보 가져오기 (API에서 메뉴명만 대조)
+# 메뉴 정보 가져오기
 def fetch_menu_details(selected_menu):
     menu_name = selected_menu.split(" - ")[0]  # 열량 제거하고 메뉴명만 사용
 
@@ -39,14 +39,14 @@ def fetch_menu_details(selected_menu):
             with open(INGREDIENT_FILE, "w", encoding="utf-8") as file:
                 file.write(f"메뉴명: {menu_name}\n\n[식재료]\n{ingredients}\n\n[영양 정보]\n{nutrition}")
 
-            # 메시지 표시 후 GUI 종료 및 ingredient_display.py 실행
+            # 메시지 표시 후 GUI 종료
             messagebox.showinfo("저장 완료", "메뉴 정보를 저장했습니다.")
             root.after(500, close_and_run_next)  # 0.5초 후 종료 및 실행
             return
     
     messagebox.showerror("오류", "해당 메뉴 정보를 찾을 수 없습니다.")
 
-# GUI 종료 후 ingredient_display.py 실행 함수
+# GUI 종료 후 ingredient_display.py 실행
 def close_and_run_next():
     root.destroy()
     subprocess.run(["python", "src/ingredient_display.py"])  # ingredient_display.py 실행
@@ -61,7 +61,7 @@ label.pack(pady=10)
 
 menu_list = load_menu_list()
 
-# 메뉴 선택 리스트 (열량 포함된 형태로 표시)
+# 메뉴 선택 리스트
 menu_var = tk.StringVar()
 menu_dropdown = tk.OptionMenu(root, menu_var, *menu_list)
 menu_dropdown.pack(pady=10)

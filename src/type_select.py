@@ -37,16 +37,16 @@ label = tk.Label(root, text="원하는 음식 유형을 선택하세요!", font=
 label.pack(pady=10)
 
 # 버튼 추가
-btn_soup = tk.Button(root, text="🍲 국 & 찌개", width=20, command=lambda: search_recipes("국&찌개"))
+btn_soup = tk.Button(root, text="국 & 찌개", width=20, command=lambda: search_recipes("국&찌개"))
 btn_soup.pack(pady=5)
 
-btn_side = tk.Button(root, text="🥗 반찬", width=20, command=lambda: search_recipes("반찬"))
+btn_side = tk.Button(root, text="반찬", width=20, command=lambda: search_recipes("반찬"))
 btn_side.pack(pady=5)
 
-btn_main = tk.Button(root, text="🍛 일품", width=20, command=lambda: search_recipes("일품"))
+btn_main = tk.Button(root, text="일품", width=20, command=lambda: search_recipes("일품"))
 btn_main.pack(pady=5)
 
-btn_dessert = tk.Button(root, text="🍰 후식", width=20, command=lambda: search_recipes("후식"))
+btn_dessert = tk.Button(root, text="후식", width=20, command=lambda: search_recipes("후식"))
 btn_dessert.pack(pady=5)
 
 root.mainloop()

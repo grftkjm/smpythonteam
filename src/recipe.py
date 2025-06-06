@@ -1,8 +1,8 @@
 import tkinter as tk
 import requests
 import json
-import subprocess  # 이미지 실행을 위해 사용
-import os  # 이미지 저장을 위해 사용
+import subprocess 
+import os  
 from tkinter import messagebox
 
 # 파일 경로
@@ -16,7 +16,7 @@ API_URL = "http://openapi.foodsafetykorea.go.kr/api/7904b29570d44de38aa6/COOKRCP
 def get_menu_name():
     try:
         with open(INGREDIENT_FILE, "r", encoding="utf-8") as file:
-            return file.readline().strip().replace("메뉴명: ", "")  # "메뉴명: " 제거하고 가져오기
+            return file.readline().strip().replace("메뉴명: ", "")  
     except FileNotFoundError:
         return None
 
@@ -28,10 +28,10 @@ def fetch_recipe(menu_name):
     for item in data["COOKRCP01"]["row"]:
         if item["RCP_NM"] == menu_name:
             recipe_steps = []
-            for i in range(1, 21):  # MANUAL01 ~ MANUAL20 확인
-                step_key = f"MANUAL{str(i).zfill(2)}"  # 01, 02 형식 유지
+            for i in range(1, 21): 
+                step_key = f"MANUAL{str(i).zfill(2)}" 
                 step = item.get(step_key, "").strip()
-                if not step:  # 빈 값이면 종료
+                if not step: 
                     break
                 recipe_steps.append(step)
 
@@ -102,6 +102,6 @@ label_recipe.pack(pady=10)
 btn_next = tk.Button(root, text="다음", command=next_step, width=10)
 btn_next.pack(pady=10)
 
-next_step()  # 첫 번째 레시피 단계 시작
+next_step() 
 
 root.mainloop()

@@ -1,5 +1,5 @@
 import tkinter as tk
-import subprocess  # recipe.py 실행을 위해 사용
+import subprocess  
 from tkinter import messagebox
 
 # 파일 경로
