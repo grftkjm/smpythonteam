@@ -7,10 +7,15 @@ def clear_data_folder():
     data_folder = "data"
     os.makedirs(data_folder, exist_ok=True)
 
-    # 파일 삭제 (txt, jpg)
-    for file in os.listdir(data_folder):
-        if file.endswith(".txt") or file.endswith(".jpg"):
-            os.remove(os.path.join(data_folder, file))
+    files = ["menu_list.txt", "ingredient.txt", "recipe_image.jpg"]
+    
+    for file in files:
+        file_path = os.path.join(data_folder, file)
+        if file.endswith(".txt") and not os.path.exists(file_path):
+            with open(file_path, "w") as f:
+                f.write("") 
+        elif file.endswith(".jpg") and not os.path.exists(file_path):
+            open(file_path, "wb").close()  
 
 # 초기화 실행
 clear_data_folder()
