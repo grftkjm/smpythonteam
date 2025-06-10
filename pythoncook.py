@@ -5,17 +5,22 @@ import os
 # 파일 초기화 함수
 def clear_data_folder():
     data_folder = "data"
-    os.makedirs(data_folder, exist_ok=True)
-
-    files = ["menu_list.txt", "ingredient.txt", "recipe_image.jpg"]
+    os.makedirs(data_folder, exist_ok=True)  # 폴더 없으면 생성
     
+    files = ["menu_list.txt", "ingredient.txt", "recipe_image.jpg"]
+
     for file in files:
         file_path = os.path.join(data_folder, file)
-        if file.endswith(".txt") and not os.path.exists(file_path):
-            with open(file_path, "w") as f:
-                f.write("") 
-        elif file.endswith(".jpg") and not os.path.exists(file_path):
-            open(file_path, "wb").close()  
+
+        # 파일이 존재하면 기존 내용 제거
+        if file.endswith(".txt"):
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write("")  # 빈 파일로 초기화
+        
+        elif file.endswith(".jpg"):
+            with open(file_path, "wb") as f:
+                f.write(b"")  # 이미지 파일 초기화
+
 
 # 초기화 실행
 clear_data_folder()
