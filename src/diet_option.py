@@ -32,7 +32,7 @@ def adjust_calories(tdee, weight_loss_goal):
         weight_loss_goal = 1.5  # 자동 제한
 
     daily_calories = tdee - (7700 * weight_loss_goal / 7)  # 7700kcal = 1kg 감량
-    return max(daily_calories, 1200)  # 최소 섭취 칼로리 제한
+    return daily_calories
 
 # 메뉴 데이터 가져오기 (INFO_ENG 사용)
 def fetch_menu(menu_type, daily_kcal=None):
